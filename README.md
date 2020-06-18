@@ -4,6 +4,7 @@ The goal of this code is to try some sample code against the temporal-java-SDK a
 
 ## Installation
 
+1. This was built with Java 14.0.1, so just something to keep in mind
 1. [Follow these instructions](https://docs.temporal.io/docs/installing-server) and launch the server. Make sure you can go to http://localhost:8088/
 1. Clone this repository
 1. Use IntelliJ CE to import this project; I did not have time to test via the CMD line at the time of this writing
