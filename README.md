@@ -30,5 +30,4 @@ Credit cards typically have two stages with them - one being authorization and l
 
 ## Next Steps/Future
 
-1. I would like to handle the case of stopping the workflow when a credit card enters into a failed state.
 1. I would like to inject some more craziness, like when additional fraud is injected into the process.
