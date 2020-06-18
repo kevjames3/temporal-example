@@ -3,7 +3,6 @@ package io.temporal.payments;
 import java.util.Random;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 
 public class FakeCreditCardInstance implements CreditCardInstance {
@@ -19,7 +18,7 @@ public class FakeCreditCardInstance implements CreditCardInstance {
   private int timeToCapture;
   private final String id;
 
-  private static final boolean FORCE_NO_FAIL = true;
+  private static final boolean FORCE_NO_FAIL = false;
   private static final int MIN_START_TIME = 2;
   private static final int MAX_TIME_TO_NEXT_STATE = 5;
 
@@ -32,7 +31,7 @@ public class FakeCreditCardInstance implements CreditCardInstance {
     captureStarted = false;
 
     willFail = new Random().nextInt(10) <= 2; // There is a 20% chance the credit card will fail
-    if(FORCE_NO_FAIL){ 
+    if (FORCE_NO_FAIL) {
       willFail = false;
     }
 
@@ -63,21 +62,19 @@ public class FakeCreditCardInstance implements CreditCardInstance {
   public void startAuthorizing() {
     authorizationStarted = true;
     if (willFail) {
-      ScheduledFuture future =
-          scheduler.schedule(
-              () -> {
-                failed = true;
-              },
-              secondsToFailure,
-              TimeUnit.SECONDS);
+      scheduler.schedule(
+          () -> {
+            failed = true;
+          },
+          secondsToFailure,
+          TimeUnit.SECONDS);
     } else {
-      ScheduledFuture future =
-          scheduler.schedule(
-              () -> {
-                authorized = true;
-              },
-              timeToAuthorized,
-              TimeUnit.SECONDS);
+      scheduler.schedule(
+          () -> {
+            authorized = true;
+          },
+          timeToAuthorized,
+          TimeUnit.SECONDS);
     }
   }
 

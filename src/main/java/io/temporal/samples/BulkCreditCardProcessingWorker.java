@@ -47,7 +47,7 @@ public class BulkCreditCardProcessingWorker {
     }
 
     for (final Thread thread : parallelWorkloads) {
-      thread.join(); //Wait until all the threads are done
+      thread.join(); // Wait until all the threads are done
     }
     System.exit(0);
   }

@@ -2,6 +2,7 @@ package io.temporal.samples;
 
 import io.temporal.activity.ActivityOptions;
 import io.temporal.common.RetryOptions;
+import io.temporal.payments.CreditCardFailureException;
 import io.temporal.workflow.Workflow;
 import java.time.Duration;
 
@@ -9,7 +10,11 @@ public class ProcessCreditCardWorkflowImpl implements ProcessCreditCardWorkflow 
   private final ActivityOptions options =
       ActivityOptions.newBuilder()
           .setScheduleToCloseTimeout(Duration.ofMinutes(3))
-          .setRetryOptions(RetryOptions.newBuilder().setMaximumAttempts(10).build())
+          .setRetryOptions(
+              RetryOptions.newBuilder()
+                  .setMaximumAttempts(10)
+                  .setDoNotRetry(CreditCardFailureException.class)
+                  .build())
           .build();
 
   private final CreditCardAuthorizeActivity authorizeActivity =

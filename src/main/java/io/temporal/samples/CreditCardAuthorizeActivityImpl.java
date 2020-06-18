@@ -1,5 +1,6 @@
 package io.temporal.samples;
 
+import io.temporal.payments.CreditCardFailureException;
 import io.temporal.payments.CreditCardInstance;
 import io.temporal.payments.CreditCardService;
 
@@ -12,8 +13,7 @@ public class CreditCardAuthorizeActivityImpl implements CreditCardAuthorizeActiv
     }
 
     if (creditCard.hasFailed()) {
-      // insert logic to stop trying, not realeased yet
-      // (https://github.com/temporalio/temporal-java-sdk/blob/master/src/main/java/io/temporal/failure/ApplicationFailure.java)
+      throw new CreditCardFailureException("Credit card with " + creditCard.id() + " has failed");
     }
 
     if (!creditCard.isAuthorized())
