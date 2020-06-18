@@ -6,7 +6,7 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 
-public class FakeCreditCardHandler implements CreditCardHandler {
+public class FakeCreditCardInstance implements CreditCardInstance {
   private final ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(1);
   private boolean failed;
   private boolean captured;
@@ -19,17 +19,22 @@ public class FakeCreditCardHandler implements CreditCardHandler {
   private int timeToCapture;
   private final String id;
 
+  private static final boolean FORCE_NO_FAIL = true;
   private static final int MIN_START_TIME = 2;
   private static final int MAX_TIME_TO_NEXT_STATE = 5;
 
-  public FakeCreditCardHandler(final String id) {
+  public FakeCreditCardInstance(final String id) {
     this.id = id;
     failed = false;
     captured = false;
     authorized = false;
     willFail = false;
     captureStarted = false;
-    willFail = new Random().nextInt(10) <= 10;
+
+    willFail = new Random().nextInt(10) <= 5; // There is a 20% chance the credit card will fail
+    if(FORCE_NO_FAIL){
+      willFail = false;
+    }
 
     if (willFail) {
       secondsToFailure = new Random().nextInt(MAX_TIME_TO_NEXT_STATE);
@@ -42,11 +47,6 @@ public class FakeCreditCardHandler implements CreditCardHandler {
   @Override
   public boolean hasFailed() {
     return failed;
-  }
-
-  @Override
-  public boolean isStillProcessing() {
-    return !(failed ^ captured);
   }
 
   @Override
@@ -65,22 +65,16 @@ public class FakeCreditCardHandler implements CreditCardHandler {
     if (willFail) {
       ScheduledFuture future =
           scheduler.schedule(
-              new Runnable() {
-                @Override
-                public void run() {
-                  failed = true;
-                }
+              () -> {
+                failed = true;
               },
               secondsToFailure,
               TimeUnit.SECONDS);
     } else {
       ScheduledFuture future =
           scheduler.schedule(
-              new Runnable() {
-                @Override
-                public void run() {
-                  authorized = true;
-                }
+              () -> {
+                authorized = true;
               },
               timeToAuthorized,
               TimeUnit.SECONDS);
@@ -91,10 +85,8 @@ public class FakeCreditCardHandler implements CreditCardHandler {
   public void startCapturing() {
     captureStarted = true;
     scheduler.schedule(
-        new Runnable() {
-          public void run() {
-            captured = true;
-          }
+        () -> {
+          captured = true;
         },
         timeToCapture,
         TimeUnit.SECONDS);
@@ -113,21 +105,5 @@ public class FakeCreditCardHandler implements CreditCardHandler {
   @Override
   public String id() {
     return id;
-  }
-
-  @Override
-  public String toString() {
-    StringBuilder builder = new StringBuilder();
-    builder.append("Handler (");
-    builder.append(id);
-    builder.append(") Processing: ");
-    builder.append(isStillProcessing());
-    builder.append(" Failed: ");
-    builder.append(hasFailed());
-    builder.append(" Authorized: ");
-    builder.append(isAuthorized());
-    builder.append(" Captured: ");
-    builder.append(isCaptured());
-    return builder.toString();
   }
 }

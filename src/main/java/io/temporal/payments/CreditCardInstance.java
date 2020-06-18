@@ -1,9 +1,7 @@
 package io.temporal.payments;
 
-public interface CreditCardHandler {
+public interface CreditCardInstance {
   boolean hasFailed();
-
-  boolean isStillProcessing();
 
   boolean isAuthorized();
 
@@ -18,6 +16,4 @@ public interface CreditCardHandler {
   boolean authorizationStarted();
 
   String id();
-
-  String toString();
 }

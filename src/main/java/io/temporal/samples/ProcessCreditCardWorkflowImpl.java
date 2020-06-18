@@ -1,25 +1,26 @@
 package io.temporal.samples;
 
-import io.temporal.payments.CreditCardHandler;
+import io.temporal.activity.ActivityOptions;
+import io.temporal.common.RetryOptions;
+import io.temporal.workflow.Workflow;
+import java.time.Duration;
 
 public class ProcessCreditCardWorkflowImpl implements ProcessCreditCardWorkflow {
-  //  private final ActivityOptions options =
-  //      ActivityOptions.newBuilder()
-  //          .setScheduleToCloseTimeout(Duration.ofMinutes(3))
-  //          // disable retries for example to run faster
-  //          .setRetryOptions(RetryOptions.newBuilder().setMaximumAttempts(5).build())
-  //          .build();
-  //
-  //  private final CreditCardAuthorizeActivity authorizeActivity =
-  //      Workflow.newActivityStub(CreditCardAuthorizeActivityImpl.class, options);
-  //
-  //  private final CreditCardCaptureActivity captureActivity =
-  //      Workflow.newActivityStub(CreditCardCaptureActivityImpl.class, options);
+  private final ActivityOptions options =
+      ActivityOptions.newBuilder()
+          .setScheduleToCloseTimeout(Duration.ofMinutes(3))
+          .setRetryOptions(RetryOptions.newBuilder().setMaximumAttempts(10).build())
+          .build();
+
+  private final CreditCardAuthorizeActivity authorizeActivity =
+      Workflow.newActivityStub(CreditCardAuthorizeActivity.class, options);
+
+  private final CreditCardCaptureActivity captureActivity =
+      Workflow.newActivityStub(CreditCardCaptureActivity.class, options);
 
   @Override
-  public void processCreditCard(CreditCardHandler handler) {
-    int a = 2;
-    //    authorizeActivity.authorize(handler);
-    //    captureActivity.capture(handler);
+  public void processCreditCard(final String creditCardId) {
+    authorizeActivity.authorize(creditCardId);
+    captureActivity.capture(creditCardId);
   }
 }

@@ -1,14 +1,16 @@
 package io.temporal.samples;
 
-import io.temporal.payments.CreditCardHandler;
+import io.temporal.payments.CreditCardInstance;
+import io.temporal.payments.CreditCardService;
 
 public class CreditCardCaptureActivityImpl implements CreditCardCaptureActivity {
   @Override
-  public void capture(CreditCardHandler handler) {
-    if (!handler.captureStarted()) {
-      handler.startCapturing();
+  public void capture(final String creditCardId) {
+    final CreditCardInstance creditCard = CreditCardService.getPaymentInstance(creditCardId);
+    if (!creditCard.captureStarted()) {
+      creditCard.startCapturing();
     }
-    if (!handler.isCaptured())
-      throw new RuntimeException("Capture has not completed for id: " + handler.id());
+    if (!creditCard.isCaptured())
+      throw new RuntimeException("Capture has not completed for id: " + creditCard.id());
   }
 }
