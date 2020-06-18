@@ -1,127 +1,31 @@
-# Java Temporal Samples
-These samples demonstrate various capabilities of Java Temporal client and server. You can learn more about Temporal at:
-* [Temporal Service](https://github.com/temporalio/temporal)
-* [Temporal Java Client](https://github.com/temporalio/temporal-java-sdk)
-* [Go Temporal Client](https://github.com/temporalio/temporal-go-sdk)
+# Temporal Example
 
-## Overview of the Samples
+Goal of this code is to try some sample code against the [temporal-java-sdk](https://github.com/temporalio/temporal-java-sdk) as well as the overall Cadence workflow. For some more examples, I would recommend checking out the [example code](https://github.com/temporalio/temporal-java-samples) as well.
 
-* **HelloWorld Samples**
+## Installation
 
-    The following samples demonstrate:
+1. [Follow these instructions](https://docs.temporal.io/docs/installing-server) and launch the server. Make sure you can go to
+1. Clone this repository
+1. Use Intellij CE to import this project; I did not have time to test via the CMD line at the time of this writing
+1. Go to `BulkCreditCardProcessingWorker` and execute from there.
 
-  * **HelloActivity**: a single activity workflow
-  * **HelloActivityRetry**: how to retry an activity
-  * **HelloAsync**: how to call activities asynchronously and wait for them using Promises
-  * **HelloAsyncLambda**: how to run part of a workflow asynchronously in a separate task (thread)
-  * **HelloAsyncActivityCompletion**: an asynchronous activity implementation
-  * **HelloChild**: a child workflow
-  * **HelloException**: exception propagation and wrapping
-  * **HelloQuery**: a query
-  * **HelloSignal**: sending and handling a signal
-  * **HelloPeriodic**: a sample workflow that executes an activity periodically forever
+## Explanation
 
-* **FileProcessing** demonstrates task routing features. The sample workflow downloads a file, processes it, and uploads
-    the result to a destination. The first activity can be picked up by any worker. However, the second and third activities
-    must be executed on the same host as the first one.
+The goal of this is to demonstrate how Temporal's platform could work with a credit card platform. Credit cards typically have two stages with them - one being authorization and later on capture. Typically, you could do both phases in one go, but sometimes, you will need to do business logic between the Capture and Authorization phase of the credit card processing. Next, through discussion with the maintainers, I identified that Workflows need to occur separately for each credit card. So, I followed this method.
 
-## Get the Samples
+1. I needed to create a `CreditCardService` that would gather a state of a credit card via Singleton pattern
+1. I then created a `FakeCreditCardInstance` that would have a series of attributes attached that would follow a series of states, from Authorized to Capture. The time it would take was dictated by `ScheduledFuture` and random amounts of time
+1. The `ProcessCreditCardWorkflowImpl` takes the credit card id that needs to be processed. For all intents and purposes, it is a dummy id.
+1. The `CreditCardAuthorizeActivityImpl` and `CreditCardAuthorizeCaptureImpl` make sure that the relevant stage transitions happen. If the credit card is not complete at that phase, an exception is thrown and `Temporal` will follow up at a later time as specified in `ProcessCreditCardWorkflowImpl` (see `options` instance variable).
+1. Lastly, I kick off `N` number of credit card workflows via threads in the `BulkCreditCardProcessingWorker` and then waiting for all threads to conclude before shutting down
 
-Run the following commands:
+## What I Learned in the Process
 
-     git clone https://github.com/temporalio/temporal-java-samples
-     cd temporal-java-samples
+1. I originally tried to pass in a `CreditCardInstance` into the `ProcessCreditCardWorkflowImpl`...that is not allowed, as the workflow will need an object that can be deserialized. Instead, passing a reference works, and the `Activities` are the ones that should handle service calls
+1. Threads are great for demos and do have downsides, but when you want to have the program wait on them before continuing, `Thread#join()` does wonders
+1. With this process, I am wondering how architectures should change when it comes to orchestration. As such, the methods that I put in place here are the "pull" methods, but when they fail, expontential decay is put into place.
 
-## Import into IntelliJ
+## Next Steps/Future
 
-In the IntelliJ user interface, navigate to **File**->**New**->**Project from Existing Sources**.
-
-Select the cloned directory. In the **Import Project page**, select **Import project from external model**,
-choose **Gradle** and then click **Next**->**Finish**.
-
-## Build the Samples
-
-      ./gradlew build
-
-## Run Temporal Server
-
-Run Temporal Server using Docker Compose:
-
-     curl -L https://github.com/temporalio/temporal/releases/download/v0.23.1/docker.tar.gz | tar -xz --strip-components 1 docker/docker-compose.yml
-     docker-compose up
-
-If this does not work, see the instructions for running Temporal Server at https://github.com/temporalio/temporal/blob/master/README.md.
-
-## See Temporal UI (Not Available yet!)
-
-The Temporal Server running in a docker container includes a Web UI.
-
-Connect to [http://localhost:8088](http://localhost:8088).
-
-Enter the *sample* domain. You'll see a "No Results" page. After running any sample, change the 
-filter in the
-top right corner from "Open" to "Closed" to see the list of the completed workflows.
-
-Click on a *RUN ID* of a workflow to see more details about it. Try different view formats to get a different level
-of details about the execution history.
-
-## Install Temporal CLI
-
-[Command Line Interface Documentation](https://docs.temporal.io/docs/08_running_temporal/02_cli)
-
-## Run the samples
-
-Each sample has specific requirements for running it. The following sections contain information about
-how to run each of the samples after you've built them using the preceding instructions.
-
-Don't forget to check unit tests found under src/test/java!
-
-### Hello World
-
-To run the hello world samples:
-
-    ./gradlew -q execute -PmainClass=io.temporal.samples.hello.HelloActivity
-    ./gradlew -q execute -PmainClass=io.temporal.samples.hello.HelloActivityRetry
-    ./gradlew -q execute -PmainClass=io.temporal.samples.hello.HelloAsync
-    ./gradlew -q execute -PmainClass=io.temporal.samples.hello.HelloAsyncActivityCompletion
-    ./gradlew -q execute -PmainClass=io.temporal.samples.hello.HelloAsyncLambda
-    ./gradlew -q execute -PmainClass=io.temporal.samples.hello.HelloChild
-    ./gradlew -q execute -PmainClass=io.temporal.samples.hello.HelloException
-    ./gradlew -q execute -PmainClass=io.temporal.samples.hello.HelloPeriodic
-    ./gradlew -q execute -PmainClass=io.temporal.samples.hello.HelloCron
-    ./gradlew -q execute -PmainClass=io.temporal.samples.hello.HelloQuery
-    ./gradlew -q execute -PmainClass=io.temporal.samples.hello.HelloSignal
-
-### File Processing
-
-This sample has two executables. Execute each command in a separate terminal window. The first command
-runs the worker that hosts the workflow and activities implementation. To demonstrate that activities
-execute together, we recommend that you run more than one instance of this worker.
-
-    ./gradlew -q execute -PmainClass=io.temporal.samples.fileprocessing.FileProcessingWorker
-
-The second command starts workflows. Each invocation starts a new workflow execution.
-
-    ./gradlew -q execute -PmainClass=io.temporal.samples.fileprocessing.FileProcessingStarter
-    
-### Trip Booking
-
-Temporal implementation of the [Camunda BPMN trip booking example](https://github.com/berndruecker/trip-booking-saga-java)
-
-Demonstrates Temporal approach to SAGA.
-
-To run:
-
-    ./gradlew -q execute -PmainClass=io.temporal.samples.bookingsaga.TripBookingSaga
-    
-The produced exception trace is part of the sample, so don't get confused by it.
-
-### Notes for MacOSX Users
-Due to issues with default hostname resolution (see https://stackoverflow.com/questions/33289695/inetaddress-getlocalhost-slow-to-run-30-seconds), MacOSX Users may see gRPC DEADLINE_EXCEEDED errors in normal operation.
-
-This can be solved by adding the following entries to your `/etc/hosts` file (where my-macbook is your hostname):
-
-```conf
-127.0.0.1   my-macbook
-::1         my-macbook
-```
+1. I would like to handle the case of stop calling when a credit card fails
+1. I would like to inject some more craziness, like when additional fraud is injected into the process
