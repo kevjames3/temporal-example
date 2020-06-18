@@ -31,8 +31,8 @@ public class FakeCreditCardInstance implements CreditCardInstance {
     willFail = false;
     captureStarted = false;
 
-    willFail = new Random().nextInt(10) <= 5; // There is a 20% chance the credit card will fail
-    if(FORCE_NO_FAIL){
+    willFail = new Random().nextInt(10) <= 2; // There is a 20% chance the credit card will fail
+    if(FORCE_NO_FAIL){ 
       willFail = false;
     }
 
